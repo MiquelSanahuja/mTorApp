@@ -1,9 +1,12 @@
 package nl.bhit.mtor.receiver;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import nl.bhit.mtor.receiver.model.ClientMessage;
@@ -28,10 +31,14 @@ import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.util.Log;
 import android.view.MenuItem;
+import android.widget.ScrollView;
+import android.widget.TableLayout;
+import android.widget.TableRow;
 import android.widget.TextView;
 
 public class DisplayMessageActivity extends Activity {
-	TextView textView;
+	ScrollView textView;
+	private DateFormat sdf = SimpleDateFormat.getDateTimeInstance();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -39,44 +46,70 @@ public class DisplayMessageActivity extends Activity {
 		setupActionBar();
 		textView = createTextView();
 		setContentView(textView);
-		new DownloadImageTask().execute("http://tomcat.bhit.nl/mTor/services/api/messages/2.json");
-		
+		new RetrieveMessagesTask().execute("http://tomcat.bhit.nl/mTor/services/api/messages/2.json");
+
 		Calendar cal = Calendar.getInstance();
-		 cal.add(Calendar.MINUTE, 1);
-			Intent intent = new Intent(this, DisplayMessageActivity.class);
-		 intent.putExtra("alarm_message", "O'Doyle Rules!");
-		 // In reality, you would want to have a static variable for the request code instead of 192837
-		 PendingIntent sender = PendingIntent.getBroadcast(this, 192837, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+		cal.add(Calendar.MINUTE, 1);
+		Intent intent = new Intent(this, DisplayMessageActivity.class);
+		intent.putExtra("alarm_message", "O'Doyle Rules!");
+		// In reality, you would want to have a static variable for the request
+		// code instead of 192837
+		PendingIntent sender = PendingIntent.getBroadcast(this, 192837, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-		 // Get the AlarmManager service
-		 AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-		 am.set(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), sender);
+		// Get the AlarmManager service
+		AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
+		am.set(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), sender);
 	}
-
-	private TextView createTextView() {
+	private ScrollView createTextView() {
+		ScrollView scrollView = new ScrollView(this);
 		TextView textView = new TextView(this);
-		textView.setTextSize(16);
+		textView.setTextSize(12);
 		textView.setText("temp message....");
-		return textView;
+		scrollView.addView(textView);
+		return scrollView ;
 	}
 
+	List<ClientMessage> messages;
 	private String getMessage(String url) {
-		List<ClientMessage> messages = getContacts(url);
-		if(messages==null){
-			return "nothing found :(";
+		messages = getContacts(url);
+		return "";
+	}
+	private TableLayout createTable(){
+		TableLayout table = new TableLayout(this);
+
+		TableRow.LayoutParams params1 = new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT, 25);
+		TableRow.LayoutParams params2 = new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT, 25);
+		TableRow.LayoutParams params3 = new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT, 25);
+		TableRow row;
+		row = new TableRow(this);
+		TableRow.LayoutParams params4 = new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT, 25);
+		params4.span=3;
+		params4.column=1;
+		row.addView(createTextView(params4, sdf.format(new Date())));
+		table.addView(row);
+		
+		if (messages == null) {
+			row = new TableRow(this);
+			row.addView(createTextView(params3, "nothing found"));
+			table.addView(row);
 		}
-		StringBuffer result = new StringBuffer();
-		Calendar cal =   Calendar.getInstance();
-		result.append(cal);
-		result.append("\n");
 		for (ClientMessage clientMessage : messages) {
-			result.append(clientMessage.getStatus());
-			result.append(" ");
-			result.append(clientMessage.getContent());
-			result.append("\n");
+			row = new TableRow(this);
+			row.addView(createTextView(params1, ""+clientMessage.getProjectId()));
+			row.addView(createTextView(params2, clientMessage.getStatus()));
+			row.addView(createTextView(params3, clientMessage.getContent()));
+			table.addView(row);
 		}
-		return result.toString();
-		// return getIntent().getStringExtra(MainActivity.EXTRA_MESSAGE);
+
+		return table;
+	}
+
+	private TextView createTextView(TableRow.LayoutParams params, String text) {
+		TextView textView = new TextView(this);
+		textView.setLayoutParams(params);
+		textView.setTextSize(12);		
+		textView.setText(text);
+		return textView;
 	}
 
 	/**
@@ -133,8 +166,7 @@ public class DisplayMessageActivity extends Activity {
 		return super.onOptionsItemSelected(item);
 	}
 
-
-	private class DownloadImageTask extends AsyncTask<String, Void, String> {
+	private class RetrieveMessagesTask extends AsyncTask<String, Void, String> {
 		/**
 		 * The system calls this to perform work in a worker thread and delivers
 		 * it the parameters given to AsyncTask.execute()
@@ -148,7 +180,8 @@ public class DisplayMessageActivity extends Activity {
 		 * the result from doInBackground()
 		 */
 		protected void onPostExecute(String result) {
-			textView.setText(result);
+			textView.removeAllViews();
+			textView.addView(createTable());
 		}
 	}
 }
