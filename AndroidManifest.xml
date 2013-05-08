@@ -3,9 +3,7 @@
     package="nl.bhit.mtor.receiver"
     android:versionCode="1"
     android:versionName="1.0" >
-
-    <uses-permission android:name="android.permission.INTERNET" />
-
+    
     <!-- C2DM permissions -->
     <permission
         android:name="nl.bhit.mtor.receiver.permission.C2D_MESSAGE"
@@ -21,6 +19,13 @@
     <!-- Keeps the processor from sleeping when a message is received. -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- END C2DM permissions -->
+    
+	<uses-permission android:name="android.permission.CAMERA" />
+	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+	<uses-feature android:name="android.hardware.camera" />
+	<uses-feature android:name="android.hardware.camera.autofocus" />
+	<uses-permission android:name="android.permission.VIBRATE" />
+	<uses-permission android:name="android.permission.FLASHLIGHT" />
 
     <uses-sdk
         android:minSdkVersion="8"
@@ -48,6 +53,11 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="nl.bhit.mtor.receiver.MainActivity" />
         </activity>
+		<activity 
+		    android:name="jim.h.common.android.zxinglib.CaptureActivity"
+			android:screenOrientation="landscape" android:configChanges="orientation|keyboardHidden"
+			android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+			android:windowSoftInputMode="stateAlwaysHidden" />
 <!-- C2DM -->
         <receiver
             android:name="com.google.android.gcm.GCMBroadcastReceiver"
